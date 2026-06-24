@@ -67,9 +67,14 @@ local function GetQuestData()
         local n = C_QuestLog.GetNumQuestLogEntries()
         for i = 1, n do
             local info = C_QuestLog.GetInfo(i)
-            if info and not info.isHeader then
+            if info and not info.isHeader and info.questID then
                 total = total + 1
-                if info.isComplete then completed = completed + 1 end
+                -- isComplete sur info peut être nil en Retail 12.x
+                -- C_QuestLog.IsComplete() détecte les quêtes avec objectifs remplis
+                -- même si elles ne sont pas encore rendues au PNJ
+                local isComplete = info.isComplete
+                    or C_QuestLog.IsComplete(info.questID)
+                if isComplete then completed = completed + 1 end
             end
         end
     end
@@ -675,6 +680,8 @@ evFrame:RegisterEvent("PLAYER_XP_UPDATE")
 evFrame:RegisterEvent("PLAYER_LEVEL_UP")
 evFrame:RegisterEvent("UPDATE_EXHAUSTION")
 evFrame:RegisterEvent("QUEST_LOG_UPDATE")
+evFrame:RegisterEvent("QUEST_TURNED_IN")
+evFrame:RegisterEvent("QUEST_COMPLETE")
 
 evFrame:SetScript("OnEvent", function(self, event, arg1)
     if event == "ADDON_LOADED" and arg1 == ADDON then
@@ -705,7 +712,11 @@ evFrame:SetScript("OnEvent", function(self, event, arg1)
         sessionXPGained = 0
         UpdateBar()
 
-    elseif event == "UPDATE_EXHAUSTION" or event == "QUEST_LOG_UPDATE" then
+    elseif event == "UPDATE_EXHAUSTION"
+        or  event == "QUEST_LOG_UPDATE"
+        or  event == "QUEST_TURNED_IN"
+        or  event == "QUEST_COMPLETE"
+    then
         UpdateBar()
     end
 end)
