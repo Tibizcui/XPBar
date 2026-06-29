@@ -707,7 +707,7 @@ evFrame:RegisterEvent("QUEST_COMPLETE")
 evFrame:RegisterEvent("TIME_PLAYED_MSG")
 
 evFrame:SetScript("OnEvent", function(self, event, arg1, arg2)
-    if event == "ADDON_LOADED" and arg1 == ADDON then
+    if event == "ADDON_LOADED" and arg1 and string.lower(arg1) == string.lower(ADDON) then
         InitDB()
         CreateMainBar()
 
@@ -715,6 +715,7 @@ evFrame:SetScript("OnEvent", function(self, event, arg1, arg2)
         -- Session : redémarre si demandé (option) ou si c'est la 1ère connexion jamais enregistrée.
         -- Sinon la session précédente est conservée (sessionStartTime/sessionXPGained persistés
         -- dans XPBarDB) pour survivre à un /reload.
+        if not db then InitDB() end
         if db.resetSessionOnReload or db.sessionStartTime == 0 then
             db.sessionStartTime = time()
             db.sessionXPGained  = 0
