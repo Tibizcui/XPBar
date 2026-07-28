@@ -2,7 +2,9 @@
 ## Title: XPBar
 ## Notes: Barre XP avancée — Niveau, XP, Repos, Quêtes, Stats de session
 ## Author: Tibiscui - Kirin Tor
-## Version: 2.4.0
+## Version: 2.6.0
 ## SavedVariables: XPBarDB
+## IconTexture: Interface\Icons\INV_Misc_PocketWatch_01
+## AddonCompartmentFunc: XPBar_OnAddonCompartmentClick
 
 XPBar.lua
