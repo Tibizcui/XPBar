@@ -1056,3 +1056,83 @@ evFrame:SetScript("OnEvent", function(self, event, arg1, arg2)
         UpdateBar()
     end
 end)
+
+-- ══════════════════════════════════════════════════
+-- INTEGRATION TibiSuite "Midnight"
+-- Panneau d'options flottant Midnight + fonctions publiques attendues par
+-- la barre TibiSuite (Toggle, OpenOptions). Ajout non destructif : le code
+-- ci-dessus (dont le panneau d'options natif) reste disponible.
+-- ══════════════════════════════════════════════════
+local ACCENT_XP = { 0.737, 0.220, 0.980 }   -- violet (logo #BC38FA)
+local function TibiUI() return _G.TibiMidnight end
+
+-- Fonction publique Toggle (afficher / masquer la barre)
+function XPBar_Toggle()
+    if not containerFrame then return end
+    if containerFrame:IsShown() then containerFrame:Hide()
+    else containerFrame:Show(); UpdateBar() end
+end
+
+-- Panneau d'options flottant Midnight
+local midnightPanel
+local function BuildMidnightOptions()
+    local ui = TibiUI(); if not ui then return nil end
+    if midnightPanel then return midnightPanel end
+    midnightPanel = ui.CreateOptionsPanel({
+        name = "XPBarOptionsMidnight",
+        title = "|cFF9480FFXPBar|r  Options", accent = ACCENT_XP })
+
+    midnightPanel:Section("Dimensions")
+    midnightPanel:Slider("Largeur", 200, 1200, 10,
+        function() return db and db.width or 400 end,
+        function(v) if db then db.width = v end; ApplySize(); UpdateBar() end)
+    midnightPanel:Slider("Hauteur", 10, 60, 1,
+        function() return db and db.height or 20 end,
+        function(v) if db then db.height = v end; ApplySize(); UpdateBar() end)
+
+    midnightPanel:Section("Affichage")
+    local function disp(label, key)
+        midnightPanel:Check(label,
+            function() return db and db[key] end,
+            function(v) if db then db[key] = v end; UpdateBar() end)
+    end
+    disp("Temps de jeu total", "showPlayedTime")
+    disp("Temps de session", "showSessionTime")
+    disp("Temps estimé de niveau", "showLevelingTime")
+    disp("Quêtes complétées", "showCompletedQuests")
+    disp("XP/h glissant", "showRollingXP")
+    disp("Barre d'XP incomplète", "showIncompleteBar")
+    disp("Afficher au niveau max", "showAtMaxLevel")
+    disp("Masquer la barre d'XP native", "hideDefaultXPBar")
+
+    midnightPanel:Section("Visibilité")
+    local function vis(label, key)
+        midnightPanel:Check(label,
+            function() return db and db[key] end,
+            function(v) if db then db[key] = v end; if ApplyVisibility then ApplyVisibility() end end)
+    end
+    vis("Masquer en combat", "hideInCombat")
+    vis("Masquer en véhicule", "hideInVehicle")
+    vis("Afficher au survol seulement", "mouseoverOnly")
+
+    return midnightPanel
+end
+
+function XPBar_OpenOptions()
+    local p = BuildMidnightOptions(); if p then p:Toggle() end
+end
+
+-- Roue crantée sur la barre + harmonisation (pas de recherche pour XPBar)
+local tibiEv = CreateFrame("Frame")
+tibiEv:RegisterEvent("PLAYER_LOGIN")
+tibiEv:SetScript("OnEvent", function()
+    C_Timer.After(1.0, function()
+        local ui = TibiUI()
+        if not (ui and containerFrame) then return end
+        if containerFrame._tibiControls then return end
+        ui.AddHeaderControls(containerFrame, {
+            accent = ACCENT_XP,
+            onOptions = function() XPBar_OpenOptions() end,
+        })
+    end)
+end)
